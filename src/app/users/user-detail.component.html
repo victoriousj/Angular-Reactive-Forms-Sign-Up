@@ -1,0 +1,64 @@
+<div class="card" *ngIf="user$ | async as user">
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <span>User Details:</span
+      ><a class="btn btn-outline-primary" [routerLink]="['/users/' + user.id]"
+        >edit</a
+      >
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-4">Name:</div>
+      <div class="col-md-8">{{ user.fullName }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">User Type:</div>
+      <div class="col-md-8">{{ user.userType?.name }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">Age:</div>
+      <div class="col-md-8">{{ user.age }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">Gender:</div>
+      <div class="col-md-8">{{ user.gender }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">Email:</div>
+      <div class="col-md-8">{{ user.email }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">Phone Number(s):</div>
+      <div class="col-md-8">{{ user.phoneNumbers?.join(", ") }}</div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-4">
+        {{
+          user.addressIds && user.addressIds.length > 1
+            ? "Addresses"
+            : "Address"
+        }}:
+      </div>
+    </div>
+    <div class="mb-3" *ngFor="let address of user?.addresses">
+      <div class="row">
+        <div class="col-md-4">Street 1:</div>
+        <div class="col-md-8">{{ address.street1 }}</div>
+      </div>
+      <div class="row" *ngIf="address.street2">
+        <div class="col-md-4">Street 2:</div>
+        <div class="col-md-8">{{ address.street2 }}</div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">City:</div>
+        <div class="col-md-8">{{ address.city }}</div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">State:</div>
+        <div class="col-md-8">{{ address.state }}</div>
+      </div>
+    </div>
+  </div>
+</div>
