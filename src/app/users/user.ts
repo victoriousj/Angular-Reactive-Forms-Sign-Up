@@ -2,7 +2,7 @@ import { UserType } from './../user-types/user-type';
 import { Address } from '../home/addresses/address';
 
 export interface User {
-  id: number;
+  id: number | null;
   firstName: string;
   middleInitial?: string;
   lastName: string;

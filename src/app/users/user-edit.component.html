@@ -1,10 +1,13 @@
 <div class="card">
-  <div class="card-header">
-    {{ pageTitle }}
-  </div>
+  <form novalidate (ngSubmit)="saveUser()" [formGroup]="userForm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>User Details:</span>
+      <div>
+        <button type="submit" class="btn btn-primary">{{ pageTitle }}</button>
+      </div>
+    </div>
 
-  <div class="card-body">
-    <form novalidate (ngSubmit)="saveUser()" [formGroup]="userForm">
+    <div class="card-body">
       <div class="form-group row mb-2">
         <label class="col-md-3 col-form-label" for="firstNameId"
           >First Name:</label
@@ -17,13 +20,11 @@
             placeholder="First Name (required)"
             formControlName="firstName"
             [ngClass]="{
-              'is-invalid':
-                userForm.get('firstName')?.errors &&
-                userForm.get('firstName')?.touched
+              'is-invalid': displayMessage.firstName
             }"
           />
           <span class="invalid-feedback">
-            <!-- {{ userForm.get("firstName")?.errors?.required }} -->
+            {{ displayMessage.firstName }}
           </span>
         </div>
       </div>
@@ -39,10 +40,13 @@
             type="text"
             placeholder="Middle Initial"
             formControlName="middleInitial"
+            [ngClass]="{
+              'is-invalid': displayMessage.middleInitial
+            }"
           />
-          <!-- <span class="invalid-feedback">
-            {{displayMessage.productName}}
-          </span> -->
+          <span class="invalid-feedback">
+            {{ displayMessage.middleInitial }}
+          </span>
         </div>
       </div>
 
@@ -58,14 +62,12 @@
             placeholder="Last Name (required)"
             formControlName="lastName"
             [ngClass]="{
-              'is-invalid':
-                userForm.get('lastName')?.errors &&
-                userForm.get('lastName')?.touched
+              'is-invalid': displayMessage.lastName
             }"
           />
-          <!-- <span class="invalid-feedback">
-            {{displayMessage.productName}}
-          </span> -->
+          <span class="invalid-feedback">
+            {{ displayMessage.lastName }}
+          </span>
         </div>
       </div>
 
@@ -97,17 +99,15 @@
           <input
             class="form-control"
             id="ageId"
-            type="number"
             placeholder="Age (required)"
             formControlName="age"
             [ngClass]="{
-              'is-invalid':
-                userForm.get('age')?.errors && userForm.get('age')?.touched
+              'is-invalid': displayMessage.age
             }"
           />
-          <!-- <span class="invalid-feedback">
-            {{displayMessage.productName}}
-          </span> -->
+          <span class="invalid-feedback">
+            {{ displayMessage.age }}
+          </span>
         </div>
       </div>
 
@@ -140,13 +140,12 @@
             placeholder="Email (required)"
             formControlName="email"
             [ngClass]="{
-              'is-invalid':
-                userForm.get('email')?.errors && userForm.get('email')?.touched
+              'is-invalid': displayMessage.email
             }"
           />
-          <!-- <span class="invalid-feedback">
-            {{displayMessage.productName}}
-          </span> -->
+          <span class="invalid-feedback">
+            {{ displayMessage.email }}
+          </span>
         </div>
       </div>
 
@@ -159,14 +158,14 @@
             let isLast = last
           "
         >
-          <label class="col-md-3 col-form-label" [attr.for]="'phone' + i"
+          <label class="col-md-3 col-form-label" [attr.for]="'phone'"
             >Phone Number:</label
           >
           <div class="d-flex justify-content-between col-md-9">
             <div class="input-group">
               <input
                 class="form-control"
-                [id]="'phone' + i"
+                [id]="'phone'"
                 type="text"
                 placeholder="xxx-xxx-xxxx"
                 [formControlName]="i"
@@ -245,9 +244,12 @@
                 type="text"
                 placeholder="Street 1"
                 formControlName="street1"
+                [ngClass]="{
+                  'is-invalid': displayMessage.street1
+                }"
               />
               <span class="invalid-feedback">
-                <!-- {{ userForm.get("firstName")?.errors?.required }} -->
+                {{ displayMessage.street1 }}
               </span>
             </div>
           </div>
@@ -376,8 +378,8 @@
           </div>
         </div>
       </div>
-    </form>
-  </div>
+    </div>
+  </form>
 
   <!-- <div>Pristine: {{ userForm.pristine }}</div>
   <div>Error: {{ userForm.errors }}</div>

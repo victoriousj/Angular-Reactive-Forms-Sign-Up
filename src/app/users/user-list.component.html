@@ -8,7 +8,7 @@
         class="list-group-item"
         *ngFor="let user of users"
         [ngClass]="{ active: user?.id === (selectedUser$ | async)?.id }"
-        (click)="onSelected(user.id)"
+        (click)="onSelected(user.id!)"
       >
         {{ user.fullName }}
       </button>

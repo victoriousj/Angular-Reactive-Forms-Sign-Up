@@ -1,5 +1,5 @@
-import { catchError, shareReplay } from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
+import { catchError, map, shareReplay, tap } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { Address } from './address';
 import { Injectable } from '@angular/core';
@@ -12,9 +12,23 @@ export class AddressService {
 
   constructor(private http: HttpClient) {}
 
-  addresses$ = this.http
-    .get<Address[]>(this.addressUrl)
-    .pipe(catchError(this.handleError), shareReplay(1));
+  addresses$ = this.http.get<Address[]>(this.addressUrl).pipe(
+    tap((data) => {
+      console.log('Addresses: ', data);
+    }),
+    catchError(this.handleError)
+  );
+
+  createAddress(address: Address): Observable<Address> {
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    address.id = null;
+    return this.http
+      .post<Address>(this.addressUrl, address, { headers })
+      .pipe(
+        map((newAddress) => newAddress),
+        catchError(this.handleError)
+      );
+  }
 
   private handleError(err: any): Observable<never> {
     let errorMessage: string;

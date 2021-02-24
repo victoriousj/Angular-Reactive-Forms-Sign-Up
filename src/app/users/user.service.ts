@@ -1,25 +1,18 @@
 import { UserTypeService } from './../user-types/user-type.service';
 import { AddressService } from './../home/addresses/address.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
   BehaviorSubject,
   combineLatest,
-  from,
+  concat,
+  forkJoin,
   Observable,
   throwError,
 } from 'rxjs';
-import {
-  catchError,
-  map,
-  switchMap,
-  mergeMap,
-  toArray,
-  shareReplay,
-} from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
 import { User } from './user';
-import { Address } from '../home/addresses/address';
 
 @Injectable({
   providedIn: 'root',
@@ -34,9 +27,10 @@ export class UserService {
     private addressService: AddressService
   ) {}
 
-  users$: Observable<User[]> = this.http
-    .get<User[]>(this.usersUrl)
-    .pipe(catchError(this.handleError), shareReplay(1));
+  users$: Observable<User[]> = this.http.get<User[]>(this.usersUrl).pipe(
+    tap((data) => console.log('Users: ', data)),
+    catchError(this.handleError)
+  );
 
   usersWithSubProps$ = combineLatest([
     this.users$,
@@ -55,7 +49,7 @@ export class UserService {
               (userType) => userType.id === user.userTypeId
             ),
             addresses: addresses.filter((address) =>
-              user.addressIds.includes(address.id)
+              user.addressIds?.includes(address.id!)
             ),
           } as User)
       )
@@ -77,6 +71,31 @@ export class UserService {
 
   selectedUserChanged(selectedUserId: number) {
     this.userSelectedSubject.next(selectedUserId);
+  }
+
+  createUser(user: User): Observable<User> {
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    user.id = null;
+
+    return this.http
+      .post<User>(this.usersUrl, user, { headers })
+      .pipe(
+        map((newUser) => newUser),
+        catchError(this.handleError)
+      );
+  }
+
+  updateUser(user: User): Observable<User> {
+    debugger;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    const url = `${this.usersUrl}/${user.id}`;
+    return this.http
+      .put<User>(url, user, { headers })
+      .pipe(
+        tap(() => console.log('Update User: ' + user.id)),
+        map(() => user),
+        catchError(this.handleError)
+      );
   }
 
   private handleError(err: any): Observable<never> {
