@@ -2,7 +2,16 @@ import { AddressService } from './../home/addresses/address.service';
 import { CustomValidators } from './../shared/custom.validators';
 import { catchError, concatMap, debounceTime, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
-import { concat, EMPTY, from, fromEvent, merge, Observable } from 'rxjs';
+import {
+  concat,
+  EMPTY,
+  forkJoin,
+  from,
+  fromEvent,
+  merge,
+  Observable,
+  of,
+} from 'rxjs';
 import { UserService } from './user.service';
 import { Component, ElementRef, OnInit, ViewChildren } from '@angular/core';
 import {
@@ -181,6 +190,7 @@ export class UserEditComponent implements OnInit {
   saveUser(): void {
     if (this.userForm.valid && this.userForm.dirty) {
       const user = { ...this.user, ...this.userForm.value } as User;
+      debugger;
 
       if (user.id && user.id > 0) {
         this.userService.updateUser(user).subscribe({
@@ -189,26 +199,22 @@ export class UserEditComponent implements OnInit {
         });
       } else {
         user.addressIds = [];
-        // this.addressService
-        //   .createAddress(user.addresses![0])
-        //   .subscribe((address) => {
-        //     next: user.addressIds.push(user.addressIds.push(address.id!)),
-        //     error: () => {},
-        //     // })
-        //     // ),
-        //   }),
+        const newAddresses = user.addresses?.map((address) =>
+          this.addressService
+            .createAddress(address)
+            .pipe(tap((data) => user.addressIds.push(data.id!)))
+        );
 
-        this.userService.createUser(user).subscribe({
-          next: () => this.onSaveComplete(),
-          error: (err) => (this.errorMessage = err),
-        });
-        // ]);
+        concat(
+          ...newAddresses!,
+          this.userService.createUser(user)
+        ).subscribe(() => this.onSaveComplete());
       }
     }
   }
 
   onSaveComplete(): void {
-    // this.userForm.reset();
-    // this.router.navigate(['/users']);
+    this.userForm.reset();
+    this.router.navigate(['/users']);
   }
 }
