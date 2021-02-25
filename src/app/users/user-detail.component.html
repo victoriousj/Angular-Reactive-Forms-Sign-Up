@@ -30,7 +30,13 @@
       <div class="col-md-8">{{ user.email }}</div>
     </div>
     <div class="row">
-      <div class="col-md-4">Phone Number(s):</div>
+      <div class="col-md-4">
+        {{
+          user.phoneNumbers && user.phoneNumbers.length > 1
+            ? "Phone Numbers"
+            : "Phone Number"
+        }}:
+      </div>
       <div class="col-md-8">{{ user.phoneNumbers?.join(", ") }}</div>
     </div>
     <div class="row mt-3">

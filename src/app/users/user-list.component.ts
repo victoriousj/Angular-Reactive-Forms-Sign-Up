@@ -1,22 +1,21 @@
 import { catchError } from 'rxjs/operators';
 import { EMPTY, Observable } from 'rxjs';
 import { UserService } from './user.service';
-import { Component } from '@angular/core';
-import { User } from './user';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
   selector: 'user-list',
   templateUrl: './user-list.component.html',
   styleUrls: ['./user-list.component.css'],
+  changeDetection: ChangeDetectionStrategy.Default,
 })
 export class UserListComponent {
-  pageTitle: string = 'Users';
   listFilter: string = '';
   errorMessage: string = '';
 
   constructor(private userService: UserService) {}
 
-  users$: Observable<User[]> = this.userService.usersWithSubProps$.pipe(
+  users$ = this.userService.usersWithSubProps$.pipe(
     catchError((err) => {
       this.errorMessage = err;
       return EMPTY;
@@ -26,7 +25,6 @@ export class UserListComponent {
   selectedUser$ = this.userService.selectedUser$;
 
   onSelected(userId: number): void {
-    console.log(userId);
     this.userService.selectedUserChanged(userId);
   }
 }

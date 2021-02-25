@@ -2,7 +2,7 @@ import { AddressService } from './../home/addresses/address.service';
 import { CustomValidators } from './../shared/custom.validators';
 import { catchError, debounceTime, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
-import { concat, EMPTY, forkJoin, fromEvent, merge, Observable } from 'rxjs';
+import { concat, EMPTY, fromEvent, merge } from 'rxjs';
 import { UserService } from './user.service';
 import { Component, ElementRef, OnInit, ViewChildren } from '@angular/core';
 import {
@@ -18,23 +18,48 @@ import { UserTypeService } from '../user-types/user-type.service';
 import { GenericValidator } from '../shared/generic-validator';
 
 @Component({
-  selector: 'app-user-edit',
   templateUrl: './user-edit.component.html',
   styleUrls: ['./user-edit.component.css'],
 })
 export class UserEditComponent implements OnInit {
   @ViewChildren(FormControlName, { read: ElementRef })
   formInputElements: ElementRef[] = [];
-
-  pageTitle: string = '';
+  primaryAction: string = '';
   errorMessage: string = '';
   userForm: FormGroup = new FormGroup({});
   user: User | undefined;
   userId: number | undefined;
 
+  private validationMessages: { [key: string]: { [key: string]: string } } = {
+    firstName: {
+      required: 'First Name is required.',
+    },
+    middleInitial: {
+      maxlength: 'Middle Initial must be one letter.',
+    },
+    lastName: {
+      required: 'Last Name is required.',
+    },
+    age: {
+      required: 'Age is required.',
+      isNumber: 'Please enter a valid number.',
+    },
+    email: {
+      required: 'Email is required.',
+      email: 'Please enter a valid email address.',
+    },
+    phoneNumbers: {
+      isNumber: 'Please enter a valid number.',
+    },
+    street1: {
+      required: 'Street Information is required',
+    },
+  };
+
+  private genericValidator: GenericValidator = new GenericValidator(
+    this.validationMessages
+  );
   displayMessage: { [key: string]: string } = {};
-  private validationMessages: { [key: string]: { [key: string]: string } };
-  private genericValidator: GenericValidator;
 
   userTypes$ = this.userTypeService.userTypes$.pipe(
     catchError((err) => {
@@ -43,48 +68,14 @@ export class UserEditComponent implements OnInit {
     })
   );
 
-  get phoneNumbers(): FormArray {
-    return this.userForm.get('phoneNumbers') as FormArray;
-  }
-  get addresses(): FormArray {
-    return this.userForm.get('addresses') as FormArray;
-  }
-
   constructor(
-    private fb: FormBuilder,
-    private userService: UserService,
-    private addressService: AddressService,
     private userTypeService: UserTypeService,
+    private addressService: AddressService,
+    private userService: UserService,
     private route: ActivatedRoute,
+    private fb: FormBuilder,
     private router: Router
-  ) {
-    this.validationMessages = {
-      firstName: {
-        required: 'First Name is required.',
-      },
-      middleInitial: {
-        maxlength: 'Middle Initial must be one letter.',
-      },
-      lastName: {
-        required: 'Last Name is required.',
-      },
-      age: {
-        required: 'Age is required.',
-        isNumber: 'Please enter a valid number.',
-      },
-      email: {
-        required: 'Email is required.',
-        email: 'Please enter a valid email address.',
-      },
-      phoneNumbers: {
-        isNumber: 'Please enter a valid number.',
-      },
-      street1: {
-        required: 'Street Information is required',
-      },
-    };
-    this.genericValidator = new GenericValidator(this.validationMessages);
-  }
+  ) {}
 
   ngOnInit(): void {
     this.userForm = this.fb.group({
@@ -103,10 +94,10 @@ export class UserEditComponent implements OnInit {
       const id = +(params?.get('id') || 0);
       this.userId = id;
       if (this.userId > 0) {
-        this.pageTitle = 'Edit User';
+        this.primaryAction = 'Save';
         this.setUser(id);
       } else {
-        this.pageTitle = 'Add User';
+        this.primaryAction = 'Add User';
         this.addPhoneNumber();
         this.addAddress();
       }
@@ -114,8 +105,8 @@ export class UserEditComponent implements OnInit {
   }
 
   ngAfterViewInit(): void {
-    const controlBlurs: Observable<any>[] = this.formInputElements.map(
-      (formControl: ElementRef) => fromEvent(formControl.nativeElement, 'blur')
+    const controlBlurs = this.formInputElements.map((formControl: ElementRef) =>
+      fromEvent(formControl.nativeElement, 'blur')
     );
 
     merge(this.userForm.valueChanges, ...controlBlurs)
@@ -128,11 +119,9 @@ export class UserEditComponent implements OnInit {
   }
 
   setUser(id: number): void {
-    this.userService.usersWithSubProps$.subscribe({
-      next: (data) => {
-        this.user = data.find((user) => user.id === id);
-        this.patchForm(this.user!);
-      },
+    this.userService.usersWithSubProps$.subscribe((data) => {
+      this.user = data.find((user) => user.id === id);
+      this.patchForm(this.user!);
     });
   }
 
@@ -154,13 +143,24 @@ export class UserEditComponent implements OnInit {
     });
   }
 
+  //#region Phone Numbers
+  get phoneNumbers(): FormArray {
+    return this.userForm.get('phoneNumbers') as FormArray;
+  }
+
   addPhoneNumber(): void {
     this.phoneNumbers.push(new FormControl());
   }
+  //#endregion
 
+  //#region  Addresses
   deletePhoneNumber(index: number) {
     this.phoneNumbers.removeAt(index);
     this.phoneNumbers.markAsDirty();
+  }
+
+  get addresses(): FormArray {
+    return this.userForm.get('addresses') as FormArray;
   }
 
   addAddress(): void {
@@ -180,10 +180,18 @@ export class UserEditComponent implements OnInit {
     this.addresses.markAsDirty();
   }
 
-  saveUser(): void {
-    if (this.userForm.valid && this.userForm.dirty) {
-      const user = { ...this.user, ...this.userForm.value } as User;
+  //#endregion
 
+  saveUser(): void {
+    if (!this.userForm.valid) {
+      this.displayMessage = this.genericValidator.processMessages(
+        this.userForm,
+        true
+      );
+    } else if (!this.userForm.dirty) {
+      this.errorMessage = 'No changes have been made.';
+    } else {
+      const user = { ...this.user, ...this.userForm.value } as User;
       if (user.id && user.id > 0) {
         this.updateUser(user);
       } else {
@@ -193,26 +201,21 @@ export class UserEditComponent implements OnInit {
   }
 
   deleteUser(): void {
-    if (this.userId === 0) {
-      this.onSaveComplete();
-    } else {
-      if (confirm(`Really delete the user: ${this.user?.firstName}`)) {
-        this.userService.deleteUser(this.userId!).subscribe({
-          next: () => this.onSaveComplete(),
-          error: (err: string) => (this.errorMessage = err),
-        });
-      }
+    if (confirm(`Are you sure you want to delete this user?`)) {
+      this.userService.deleteUser(this.userId!).subscribe({
+        next: () => this.onSaveComplete(),
+        error: (err: string) => (this.errorMessage = err),
+      });
     }
   }
 
   updateUser(user: User): void {
     user.addressIds = [];
-
     const existingAddresses = user.addresses?.filter((address) => address.id);
-    const modifiedAddresses = existingAddresses?.map((address) =>
+    const updatedAddresses = existingAddresses?.map((address) =>
       this.addressService.updateAddress(address).pipe(
-        tap((modifiedAddress) => {
-          user.addressIds.push(modifiedAddress.id!);
+        tap((updatedAddress) => {
+          user.addressIds.push(updatedAddress.id!);
         })
       )
     );
@@ -221,11 +224,11 @@ export class UserEditComponent implements OnInit {
     const createdAddresses = newAddresses?.map((address) =>
       this.addressService
         .createAddress(address)
-        .pipe(tap((newAddress) => user.addressIds.push(newAddress.id!)))
+        .pipe(tap((createdAddress) => user.addressIds.push(createdAddress.id!)))
     );
 
     concat(
-      ...modifiedAddresses!,
+      ...updatedAddresses!,
       ...createdAddresses!,
       this.userService.updateUser(user)
     ).subscribe(() => this.onSaveComplete());
@@ -236,7 +239,7 @@ export class UserEditComponent implements OnInit {
     const newAddresses = user.addresses?.map((address) =>
       this.addressService
         .createAddress(address)
-        .pipe(tap((address) => user.addressIds.push(address.id!)))
+        .pipe(tap((newAddress) => user.addressIds.push(newAddress.id!)))
     );
 
     concat(...newAddresses!, this.userService.createUser(user)).subscribe(() =>

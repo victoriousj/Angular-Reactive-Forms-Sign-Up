@@ -1,3 +1,4 @@
+import { UserEditGuard } from './user-edit.guard';
 import { combineLatest } from 'rxjs';
 import { UserShellComponent } from './user-shell.component';
 import { RouterModule } from '@angular/router';
@@ -22,7 +23,11 @@ import { UserEditComponent } from './user-edit.component';
     CommonModule,
     RouterModule.forChild([
       { path: 'users', component: UserShellComponent },
-      { path: 'users/:id', component: UserEditComponent },
+      {
+        path: 'users/:id',
+        component: UserEditComponent,
+        canDeactivate: [UserEditGuard],
+      },
     ]),
   ],
 })

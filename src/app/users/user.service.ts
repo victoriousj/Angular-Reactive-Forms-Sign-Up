@@ -12,6 +12,7 @@ import { User } from './user';
 })
 export class UserService {
   private usersUrl = 'api/users';
+  private headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
   constructor(
     private http: HttpClient,
@@ -19,10 +20,9 @@ export class UserService {
     private addressService: AddressService
   ) {}
 
-  users$: Observable<User[]> = this.http.get<User[]>(this.usersUrl).pipe(
-    tap((data) => console.log('Users: ', data)),
-    catchError(this.handleError)
-  );
+  users$: Observable<User[]> = this.http
+    .get<User[]>(this.usersUrl)
+    .pipe(catchError(this.handleError));
 
   usersWithSubProps$ = combineLatest([
     this.users$,
@@ -66,35 +66,27 @@ export class UserService {
   }
 
   createUser(user: User): Observable<User> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     user.id = null;
 
     return this.http
-      .post<User>(this.usersUrl, user, { headers })
-      .pipe(
-        map((newUser) => newUser),
-        catchError(this.handleError)
-      );
+      .post<User>(this.usersUrl, user, { ...this.headers })
+      .pipe(catchError(this.handleError));
   }
 
   updateUser(user: User): Observable<User> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     const url = `${this.usersUrl}/${user.id}`;
 
     return this.http
-      .put<User>(url, user, { headers })
+      .put<User>(url, user, { ...this.headers })
       .pipe(catchError(this.handleError));
   }
 
   deleteUser(id: number): Observable<{}> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     const url = `${this.usersUrl}/${id}`;
+
     return this.http
-      .delete<User>(url, { headers })
-      .pipe(
-        tap(() => console.log('Deleted User: ', id)),
-        catchError(this.handleError)
-      );
+      .delete<User>(url, { ...this.headers })
+      .pipe(catchError(this.handleError));
   }
 
   private handleError(err: any): Observable<never> {

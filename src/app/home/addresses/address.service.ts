@@ -9,6 +9,7 @@ import { Injectable } from '@angular/core';
 })
 export class AddressService {
   private addressUrl = 'api/addresses';
+  private headers = new HttpHeaders({ 'Content-Type': 'applicaiton/json' });
 
   constructor(private http: HttpClient) {}
 
@@ -17,10 +18,10 @@ export class AddressService {
     .pipe(catchError(this.handleError));
 
   createAddress(address: Address): Observable<Address> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     address.id = null;
+
     return this.http
-      .post<Address>(this.addressUrl, address, { headers })
+      .post<Address>(this.addressUrl, address, { ...this.headers })
       .pipe(
         map((newAddress) => newAddress),
         catchError(this.handleError)
@@ -28,11 +29,10 @@ export class AddressService {
   }
 
   updateAddress(address: Address): Observable<Address> {
-    const headers = new HttpHeaders({ 'Content-Type': 'applicaiton/json' });
     const url = `${this.addressUrl}/${address.id}`;
 
     return this.http
-      .put<Address>(url, address, { headers })
+      .put<Address>(url, address, { ...this.headers })
       .pipe(
         map(() => address),
         catchError(this.handleError)

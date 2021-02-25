@@ -1,21 +1,24 @@
 <div class="card">
-  <div class="card-header">{{ pageTitle }}</div>
+  <div class="card-header">
+    Users
+    <div>
+      <div class="card-body" *ngIf="users$ | async as users">
+        <div class="list-group">
+          <button
+            type="button"
+            class="list-group-item"
+            *ngFor="let user of users"
+            [ngClass]="{ active: user?.id === (selectedUser$ | async)?.id }"
+            (click)="onSelected(user.id!)"
+          >
+            {{ user.fullName }}
+          </button>
+        </div>
+      </div>
 
-  <div class="card-body" *ngIf="users$ | async as users">
-    <div class="list-group">
-      <button
-        type="button"
-        class="list-group-item"
-        *ngFor="let user of users"
-        [ngClass]="{ active: user?.id === (selectedUser$ | async)?.id }"
-        (click)="onSelected(user.id!)"
-      >
-        {{ user.fullName }}
-      </button>
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        Error: {{ errorMessage }}
+      </div>
     </div>
-  </div>
-
-  <div *ngIf="errorMessage" class="alert alert-danger">
-    Error: {{ errorMessage }}
   </div>
 </div>

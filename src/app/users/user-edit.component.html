@@ -3,7 +3,17 @@
     <div class="card-header d-flex justify-content-between align-items-center">
       <span>User Details:</span>
       <div>
-        <button type="submit" class="btn btn-primary">{{ pageTitle }}</button>
+        <button
+          type="submit"
+          class="btn btn-danger mr-3"
+          *ngIf="userId"
+          (click)="deleteUser()"
+        >
+          Delete
+        </button>
+        <button type="submit" class="btn btn-primary">
+          {{ primaryAction }}
+        </button>
       </div>
     </div>
 
@@ -380,9 +390,5 @@
       </div>
     </div>
   </form>
-
-  <!-- <div>Pristine: {{ userForm.pristine }}</div>
-  <div>Error: {{ userForm.errors }}</div>
-  <div>Touched: {{ userForm.touched }}</div>
-  <div>Value: {{ userForm.value.firstName }}</div> -->
+  <div class="text-danger">{{ errorMessage }}</div>
 </div>
