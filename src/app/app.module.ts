@@ -16,9 +16,8 @@ import { HttpClientModule } from '@angular/common/http';
     HttpClientModule,
     InMemoryWebApiModule.forRoot(AppData),
     RouterModule.forRoot([
-      { path: 'home', component: HomeComponent },
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
-      { path: '**', redirectTo: 'home', pathMatch: 'full' },
+      { path: '', component: HomeComponent },
+      { path: '**', redirectTo: '', pathMatch: 'full' },
     ]),
     UsersModule,
   ],
