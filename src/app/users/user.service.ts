@@ -2,15 +2,8 @@ import { UserTypeService } from './../user-types/user-type.service';
 import { AddressService } from './../home/addresses/address.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {
-  BehaviorSubject,
-  combineLatest,
-  concat,
-  forkJoin,
-  Observable,
-  throwError,
-} from 'rxjs';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, Observable, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 
 import { User } from './user';
 
@@ -19,7 +12,6 @@ import { User } from './user';
 })
 export class UserService {
   private usersUrl = 'api/users';
-  private addressUrl = 'api/addresses';
 
   constructor(
     private http: HttpClient,
@@ -86,14 +78,21 @@ export class UserService {
   }
 
   updateUser(user: User): Observable<User> {
-    debugger;
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     const url = `${this.usersUrl}/${user.id}`;
+
     return this.http
       .put<User>(url, user, { headers })
+      .pipe(catchError(this.handleError));
+  }
+
+  deleteUser(id: number): Observable<{}> {
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    const url = `${this.usersUrl}/${id}`;
+    return this.http
+      .delete<User>(url, { headers })
       .pipe(
-        tap(() => console.log('Update User: ' + user.id)),
-        map(() => user),
+        tap(() => console.log('Deleted User: ', id)),
         catchError(this.handleError)
       );
   }

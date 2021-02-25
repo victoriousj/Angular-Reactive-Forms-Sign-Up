@@ -12,12 +12,9 @@ export class AddressService {
 
   constructor(private http: HttpClient) {}
 
-  addresses$ = this.http.get<Address[]>(this.addressUrl).pipe(
-    tap((data) => {
-      console.log('Addresses: ', data);
-    }),
-    catchError(this.handleError)
-  );
+  addresses$ = this.http
+    .get<Address[]>(this.addressUrl)
+    .pipe(catchError(this.handleError));
 
   createAddress(address: Address): Observable<Address> {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
@@ -26,6 +23,18 @@ export class AddressService {
       .post<Address>(this.addressUrl, address, { headers })
       .pipe(
         map((newAddress) => newAddress),
+        catchError(this.handleError)
+      );
+  }
+
+  updateAddress(address: Address): Observable<Address> {
+    const headers = new HttpHeaders({ 'Content-Type': 'applicaiton/json' });
+    const url = `${this.addressUrl}/${address.id}`;
+
+    return this.http
+      .put<Address>(url, address, { headers })
+      .pipe(
+        map(() => address),
         catchError(this.handleError)
       );
   }

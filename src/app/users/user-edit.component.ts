@@ -1,17 +1,8 @@
 import { AddressService } from './../home/addresses/address.service';
 import { CustomValidators } from './../shared/custom.validators';
-import { catchError, concatMap, debounceTime, tap } from 'rxjs/operators';
+import { catchError, debounceTime, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  concat,
-  EMPTY,
-  forkJoin,
-  from,
-  fromEvent,
-  merge,
-  Observable,
-  of,
-} from 'rxjs';
+import { concat, EMPTY, forkJoin, fromEvent, merge, Observable } from 'rxjs';
 import { UserService } from './user.service';
 import { Component, ElementRef, OnInit, ViewChildren } from '@angular/core';
 import {
@@ -39,6 +30,7 @@ export class UserEditComponent implements OnInit {
   errorMessage: string = '';
   userForm: FormGroup = new FormGroup({});
   user: User | undefined;
+  userId: number | undefined;
 
   displayMessage: { [key: string]: string } = {};
   private validationMessages: { [key: string]: { [key: string]: string } };
@@ -109,7 +101,8 @@ export class UserEditComponent implements OnInit {
 
     this.route.paramMap.subscribe((params) => {
       const id = +(params?.get('id') || 0);
-      if (id > 0) {
+      this.userId = id;
+      if (this.userId > 0) {
         this.pageTitle = 'Edit User';
         this.setUser(id);
       } else {
@@ -190,27 +183,65 @@ export class UserEditComponent implements OnInit {
   saveUser(): void {
     if (this.userForm.valid && this.userForm.dirty) {
       const user = { ...this.user, ...this.userForm.value } as User;
-      debugger;
 
       if (user.id && user.id > 0) {
-        this.userService.updateUser(user).subscribe({
-          next: () => this.onSaveComplete(),
-          error: (err) => (this.errorMessage = err),
-        });
+        this.updateUser(user);
       } else {
-        user.addressIds = [];
-        const newAddresses = user.addresses?.map((address) =>
-          this.addressService
-            .createAddress(address)
-            .pipe(tap((data) => user.addressIds.push(data.id!)))
-        );
-
-        concat(
-          ...newAddresses!,
-          this.userService.createUser(user)
-        ).subscribe(() => this.onSaveComplete());
+        this.createUser(user);
       }
     }
+  }
+
+  deleteUser(): void {
+    if (this.userId === 0) {
+      this.onSaveComplete();
+    } else {
+      if (confirm(`Really delete the user: ${this.user?.firstName}`)) {
+        this.userService.deleteUser(this.userId!).subscribe({
+          next: () => this.onSaveComplete(),
+          error: (err: string) => (this.errorMessage = err),
+        });
+      }
+    }
+  }
+
+  updateUser(user: User): void {
+    user.addressIds = [];
+
+    const existingAddresses = user.addresses?.filter((address) => address.id);
+    const modifiedAddresses = existingAddresses?.map((address) =>
+      this.addressService.updateAddress(address).pipe(
+        tap((modifiedAddress) => {
+          user.addressIds.push(modifiedAddress.id!);
+        })
+      )
+    );
+
+    const newAddresses = user.addresses?.filter((address) => !address.id);
+    const createdAddresses = newAddresses?.map((address) =>
+      this.addressService
+        .createAddress(address)
+        .pipe(tap((newAddress) => user.addressIds.push(newAddress.id!)))
+    );
+
+    concat(
+      ...modifiedAddresses!,
+      ...createdAddresses!,
+      this.userService.updateUser(user)
+    ).subscribe(() => this.onSaveComplete());
+  }
+
+  createUser(user: User): void {
+    user.addressIds = [];
+    const newAddresses = user.addresses?.map((address) =>
+      this.addressService
+        .createAddress(address)
+        .pipe(tap((address) => user.addressIds.push(address.id!)))
+    );
+
+    concat(...newAddresses!, this.userService.createUser(user)).subscribe(() =>
+      this.onSaveComplete()
+    );
   }
 
   onSaveComplete(): void {
